@@ -20,7 +20,7 @@ import tororo1066.tororopluginapi.sItem.SItem
 import java.util.function.Consumer
 import java.util.function.Function
 
-abstract class AbstractCreateIngredientMenu(name: String, val isEdit: Boolean, val nowItem: ItemStack?, val nowName: String?, nowCategory: IngredientCategory?): SInventory(SJavaPlugin.plugin, name, 4) {
+abstract class AbstractCreateIngredientMenu(name: String, val isEdit: Boolean, val nowItem: ItemStack?, val nowName: String?, nowCategory: IngredientCategory? = null): SInventory(SJavaPlugin.plugin, name, 4) {
 
     override var savePlaceItems = true
     var category: IngredientCategory? = null

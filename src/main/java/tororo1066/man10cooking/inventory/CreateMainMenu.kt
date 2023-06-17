@@ -25,7 +25,7 @@ class CreateMainMenu : SInventory(SJavaPlugin.plugin, "Create",6) {
             .setDisplayName("§aオリジナルの素材を作る")
             .setCanClick(false)
             .setClickEvent { _ ->
-                CreateUniqueIngredientMenu(false).open(p)
+                CreateUniqueIngredientMenu(false,).open(p)
             })
 
         setItem(19, SInventoryItem(Material.WHEAT)
