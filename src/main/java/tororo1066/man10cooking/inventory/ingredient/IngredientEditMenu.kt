@@ -8,6 +8,7 @@ import tororo1066.man10cooking.CookingCommand
 import tororo1066.man10cooking.Man10Cooking
 import tororo1066.man10cooking.Man10Cooking.Companion.sendPrefixMsg
 import tororo1066.man10cooking.data.IngredientCategory
+import tororo1066.man10cooking.data.ingredient.AbstractIngredient
 import tororo1066.tororopluginapi.SJavaPlugin
 import tororo1066.tororopluginapi.SStr
 import tororo1066.tororopluginapi.defaultMenus.LargeSInventory
@@ -31,8 +32,8 @@ class IngredientEditMenu: LargeSInventory("IngredientEdit") {
                     when(e.click) {
                         ClickType.LEFT -> {
                             val clazz = Class.forName("tororo1066.man10cooking.inventory.ingredient.Create${it.javaClass.simpleName}Menu")
-                            val editMenu = clazz.getConstructor(Boolean::class.java, ItemStack::class.java, String::class.java, IngredientCategory::class.java)
-                                .newInstance(true, it.infoItemStack, it.internalName, it.category) as AbstractCreateIngredientMenu
+                            val editMenu = clazz.getConstructor(Boolean::class.java, AbstractIngredient::class.java)
+                                .newInstance(true, it) as AbstractCreateIngredientMenu
 
                             moveChildInventory(editMenu, p)
                         }

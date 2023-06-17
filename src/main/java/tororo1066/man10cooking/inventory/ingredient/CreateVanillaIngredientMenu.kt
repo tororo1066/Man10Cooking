@@ -8,9 +8,8 @@ import tororo1066.man10cooking.data.ingredient.VanillaIngredient
 import tororo1066.man10cooking.inventory.ingredient.AbstractCreateIngredientMenu
 import java.util.function.Function
 
-class CreateVanillaIngredientMenu(isEdit: Boolean, nowItem: ItemStack? = null, nowName: String? = null,
-                                  nowCategory: IngredientCategory? = null
-) : AbstractCreateIngredientMenu("CreateVanillaIngredient", isEdit, nowItem, nowName, nowCategory) {
+class CreateVanillaIngredientMenu(isEdit: Boolean, nowData: AbstractIngredient? = null
+) : AbstractCreateIngredientMenu("CreateVanillaIngredient", isEdit, nowData) {
 
     override val onConfirm: Function<Triple<ItemStack, IngredientCategory, Player>,
             AbstractIngredient> = Function {

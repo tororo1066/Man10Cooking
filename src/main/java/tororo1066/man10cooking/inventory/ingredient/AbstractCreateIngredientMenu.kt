@@ -20,7 +20,7 @@ import tororo1066.tororopluginapi.sItem.SItem
 import java.util.function.Consumer
 import java.util.function.Function
 
-abstract class AbstractCreateIngredientMenu(name: String, val isEdit: Boolean, val nowItem: ItemStack?, val nowName: String?, nowCategory: IngredientCategory? = null): SInventory(SJavaPlugin.plugin, name, 4) {
+abstract class AbstractCreateIngredientMenu(name: String, val isEdit: Boolean, val nowData: AbstractIngredient? = null): SInventory(SJavaPlugin.plugin, name, 4) {
 
     override var savePlaceItems = true
     var category: IngredientCategory? = null
@@ -30,15 +30,17 @@ abstract class AbstractCreateIngredientMenu(name: String, val isEdit: Boolean, v
     var irregularPriority = Int.MAX_VALUE
 
     init {
-        category = nowCategory
+        category = nowData?.category
+        irregularType = nowData?.irregularTypeName?:""
+        irregularPriority = nowData?.irregularPriority?:Int.MAX_VALUE
     }
 
     override fun renderMenu(p: Player): Boolean {
         Man10Cooking.fillBackGround(this, p)
 
         removeItem(13)
-        if (nowItem != null){
-            setItem(13,nowItem)
+        if (nowData?.infoItemStack != null){
+            setItem(13,nowData.infoItemStack!!)
         }
 
         setItems(listOf(4,12,14,22), SInventoryItem(Material.LIME_STAINED_GLASS_PANE)
@@ -123,7 +125,7 @@ abstract class AbstractCreateIngredientMenu(name: String, val isEdit: Boolean, v
 
                     item.amount = 1
                     val result = onConfirm.apply(Triple(item,category!!,p))
-                    result.internalName = nowName!!
+                    result.internalName = nowData!!.internalName
                     result.weight = weight
                     result.irregularTypeName = irregularType
                     result.irregularPriority = irregularPriority

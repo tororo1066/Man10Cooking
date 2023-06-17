@@ -9,9 +9,8 @@ import tororo1066.man10cooking.inventory.ingredient.AbstractCreateIngredientMenu
 import tororo1066.tororopluginapi.sItem.SItem
 import java.util.function.Function
 
-class CreateUniqueIngredientMenu(isEdit: Boolean, nowItem: ItemStack? = null, nowName: String? = null,
-                                 nowCategory: IngredientCategory? = null
-) : AbstractCreateIngredientMenu("CreateUniqueIngredient", isEdit, nowItem, nowName, nowCategory) {
+class CreateUniqueIngredientMenu(isEdit: Boolean, nowData: AbstractIngredient? = null
+) : AbstractCreateIngredientMenu("CreateUniqueIngredient", isEdit, nowData) {
 
     override val onConfirm: Function<Triple<ItemStack, IngredientCategory, Player>,
             AbstractIngredient> = Function {
