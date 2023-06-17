@@ -1,0 +1,4 @@
+name: Man10Cooking
+version: '${version}'
+main: tororo1066.man10cooking.Man10Cooking
+api-version: 1.19
