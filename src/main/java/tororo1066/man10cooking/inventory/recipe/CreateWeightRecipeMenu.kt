@@ -1,5 +1,6 @@
 package tororo1066.man10cooking.inventory.recipe
 
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -13,6 +14,7 @@ import tororo1066.man10cooking.data.ingredient.AbstractIngredient
 import tororo1066.man10cooking.inventory.IngredientCategoryEditMenu
 import tororo1066.man10cooking.recipe.AbstractRecipe
 import tororo1066.man10cooking.recipe.UniqueRecipe
+import tororo1066.man10cooking.recipe.WeightRecipe
 import tororo1066.tororopluginapi.SJavaPlugin
 import tororo1066.tororopluginapi.SStr
 import tororo1066.tororopluginapi.defaultMenus.LargeSInventory
@@ -25,76 +27,69 @@ import tororo1066.tororopluginapi.sItem.SItem
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
-class CreateUniqueRecipeMenu(val isEdit: Boolean) : SInventory(SJavaPlugin.plugin, "CreateUniqueRecipe", 5) {
+class CreateWeightRecipeMenu(val isEdit: Boolean, val data: WeightRecipe? = null) : SInventory(SJavaPlugin.plugin, "CreateWeightRecipe", 5) {
 
     override var savePlaceItems = true
     val craftingSlots = listOf(12,13,14,21,22,23,30,31,32)
 
-    var allowOverIngredientWeight = false
     var result: ItemStack? = null
 
     init {
         setOnClick {
             it.isCancelled = true
+            if (it.slot in craftingSlots && it.currentItem != null){
+                it.inventory.setItem(it.slot,null)
+            }
         }
+
+        result = data?.resultItem
     }
     override fun renderMenu(p: Player): Boolean {
         Man10Cooking.fillBackGround(this, p)
         removeItems(craftingSlots)
 
-        setItem(16, SInventoryItem(Material.IRON_PICKAXE)
-            .setDisplayName("§a材料を指定する")
-            .setCanClick(false).setClickEvent {
-                moveChildInventory(selectIngredientMenu { ingredient, int ->
-                    for (i in craftingSlots){
-                        if (getItem(i) != null)continue
-                        setItem(i, SInventoryItem(ingredient.infoItemStack?:ItemStack(Material.BOOK))
-                            .addLore("§cクリックで削除")
-                            .setItemAmount(int)
-                            .setCanClick(false)
-                            .setCustomData(SJavaPlugin.plugin, "ingredient", PersistentDataType.STRING, ingredient.internalName)
-                            .setClickEvent {
-                                removeItem(it.slot)
-                            })
-                    }
-                },p)
-            })
+        data?.weights?.values?.forEach {
+            craftingSlots.forEach second@ { i ->
+                if (getItem(i) != null)return@second
+                this.inv.setItem(i,SItem(Material.BOOK)
+                    .addLore("§aカテゴリ: ${it.first.internalName}")
+                    .addLore("§d重み: ${it.second}")
+                    .addLore("§cクリックで削除")
+                    .setCustomData(SJavaPlugin.plugin, "category", PersistentDataType.STRING, it.first.internalName)
+                    .setCustomData(SJavaPlugin.plugin, "weight", PersistentDataType.INTEGER, it.second))
+                return@forEach
+            }
+        }
 
-        setItem(25, SInventoryItem(Material.BOOK)
+        setItem(16, SInventoryItem(Material.BOOK)
             .setDisplayName("§dカテゴリを指定する")
             .setCanClick(false).setClickEvent {
                 val inv = IngredientCategoryEditMenu(true)
                 inv.onSelect = Consumer {
+                    p.closeInventory()
+                    Bukkit.getScheduler().runTask(SJavaPlugin.plugin, Runnable {
+                        p.closeInventory()
+                    })
                     Man10Cooking.sInput.sendInputCUI(p, PlusInt::class.java, "§a必要な重みを設定してください(/<自然数>)") { plusInt ->
-                        val item = SInventoryItem(Material.BOOK)
+                        val item = SItem(Material.BOOK)
                             .addLore("§aカテゴリ: ${it.internalName}")
                             .addLore("§d重み: ${plusInt.get()}")
                             .addLore("§cクリックで削除")
                             .setCustomData(SJavaPlugin.plugin, "category", PersistentDataType.STRING, it.internalName)
                             .setCustomData(SJavaPlugin.plugin, "weight", PersistentDataType.INTEGER, plusInt.get())
-                            .setCanClick(false)
-                            .setClickEvent {
-                                removeItem(it.slot)
-                            }
+
                         for (i in craftingSlots){
                             if (getItem(i) != null)continue
-                            setItem(i, item)
+                            this.inv.setItem(i, item)
+                            break
                         }
+                        open(p)
                     }
                 }
                 moveChildInventory(inv, p)
             })
 
-        setItem(17, SInventoryItem(Material.PURPLE_STAINED_GLASS_PANE)
-            .setDisplayName("§b重みが超えても作成できるようにする")
-            .addLore(if (allowOverIngredientWeight) "§f§l[§a§l有効§f§l]" else "§f§l[§c§l無効§f§l]")
-            .setCanClick(false)
-            .setClickEvent {
-                allowOverIngredientWeight = !allowOverIngredientWeight
-                allRenderMenu(p)
-            })
-
-        setItem(34, SInventoryItem(Material.CRAFTING_TABLE)
+        setItem(25, SInventoryItem(Material.CRAFTING_TABLE)
             .setDisplayName("§6完成品を指定する")
             .addLore("§d現在の値: §r${if (result != null) {
                 if (result!!.itemMeta.displayName == "") result!!.type.name else result!!.itemMeta.displayName
@@ -125,59 +120,67 @@ class CreateUniqueRecipeMenu(val isEdit: Boolean) : SInventory(SJavaPlugin.plugi
                 return@createInputItem
             }
 
-            val ingredients = ArrayList<AbstractIngredient>()
             val categories = ArrayList<Pair<IngredientCategory, Int>>()
 
             craftingSlots.forEach {
-                val item = items[it]?:return@forEach
-                val ingredientData = item.getCustomData(SJavaPlugin.plugin, "ingredient", PersistentDataType.STRING)
-                if (ingredientData != null){
-                    ingredients.add(Man10Cooking.ingredients[ingredientData]!!)
-                } else {
-                    val categoryData = item.getCustomData(SJavaPlugin.plugin, "category", PersistentDataType.STRING)!!
-                    val weightData = item.getCustomData(SJavaPlugin.plugin, "weight", PersistentDataType.INTEGER)!!
-                    categories.add(Pair(Man10Cooking.ingredientCategories[categoryData]!!,weightData))
-                }
+                val item = SItem(getItem(it)?:return@forEach)
+                val categoryData = item.getCustomData(SJavaPlugin.plugin, "category", PersistentDataType.STRING)!!
+                val weightData = item.getCustomData(SJavaPlugin.plugin, "weight", PersistentDataType.INTEGER)!!
+                categories.add(Pair(Man10Cooking.ingredientCategories[categoryData]!!,weightData))
             }
 
             val yml = YamlConfiguration()
-            yml.set("type","UniqueRecipe")
-            yml.set("ingredients",ingredients.map { it.internalName })
-            yml.set("categories",categories.map { "${it.first.internalName},${it.second}" })
-            yml.set("allowOverIngredientWeight",allowOverIngredientWeight)
+            yml.set("type","WeightRecipe")
+            yml.set("weights",categories.map { "${it.first.internalName},${it.second}" })
             yml.set("result",result!!)
 
-            SJavaPlugin.sConfig.saveConfig(yml, "recipes/UniqueRecipe/${str.string}")
+            SJavaPlugin.sConfig.saveConfig(yml, "recipes/WeightRecipe/${str.string}")
 
             p.sendPrefixMsg(SStr("§a作成しました"))
             Man10Cooking.reloadPluginConfig()
             CookingCommand()
+
+            Bukkit.getScheduler().runTask(SJavaPlugin.plugin, Runnable {
+                p.closeInventory()
+            })
         })
+
+        if (isEdit){
+            setItem(40, SInventoryItem(Material.RED_STAINED_GLASS_PANE)
+                .setDisplayName("§c決定").setCanClick(false).setClickEvent {
+
+                    if (result == null){
+                        p.sendPrefixMsg(SStr("&c完成品を指定してください"))
+                        return@setClickEvent
+                    }
+
+                    val categories = ArrayList<Pair<IngredientCategory, Int>>()
+
+                    craftingSlots.forEach {
+                        val item = SItem(getItem(it)?:return@forEach)
+                        val categoryData = item.getCustomData(SJavaPlugin.plugin, "category", PersistentDataType.STRING)!!
+                        val weightData = item.getCustomData(SJavaPlugin.plugin, "weight", PersistentDataType.INTEGER)!!
+                        categories.add(Pair(Man10Cooking.ingredientCategories[categoryData]!!,weightData))
+                    }
+
+                    val yml = YamlConfiguration()
+                    yml.set("type","WeightRecipe")
+                    yml.set("weights",categories.map { "${it.first.internalName},${it.second}" })
+                    yml.set("result",result!!)
+
+                    SJavaPlugin.sConfig.saveConfig(yml, "recipes/WeightRecipe/${data!!.internalName}")
+
+                    p.sendPrefixMsg(SStr("§a上書き保存しました"))
+                    Man10Cooking.reloadPluginConfig()
+                    CookingCommand()
+
+                    Bukkit.getScheduler().runTask(SJavaPlugin.plugin, Runnable {
+                        p.closeInventory()
+                    })
+                })
+        }
 
         return true
     }
 
-    private fun selectIngredientMenu(onConfirm: BiConsumer<AbstractIngredient, Int>): LargeSInventory {
-        val inv = object : LargeSInventory("SelectIngredient") {
-            override fun renderMenu(p: Player): Boolean {
-                val items = ArrayList<SInventoryItem>()
-                Man10Cooking.ingredients.values.forEach {
-                    items.add(createInputItem(SItem(it.infoItemStack?:ItemStack(Material.BOOK))
-                        .setDisplayName(it.internalName),Int::class.java,
-                        "§a/<アイテムの数(1~${it.infoItemStack?.maxStackSize?:64})>") { int, _ ->
-                        if (int !in 1..(it.infoItemStack?.maxStackSize?:64)){
-                            p.sendPrefixMsg(SStr("&c有効範囲内で選択してください"))
-                            return@createInputItem
-                        }
-
-                        onConfirm.accept(it,int)
-                    })
-                }
-                setResourceItems(items)
-                return true
-            }
-        }
-
-        return inv
-    }
 }

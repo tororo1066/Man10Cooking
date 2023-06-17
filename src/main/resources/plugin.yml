@@ -2,3 +2,17 @@ name: Man10Cooking
 version: '${version}'
 main: tororo1066.man10cooking.Man10Cooking
 api-version: 1.19
+
+commands:
+  man10cooking:
+    permission: man10cooking.user
+    aliases:
+      - mcook
+      - cook
+      - cooking
+
+permissions:
+  man10cooking.user:
+    default: true
+  man10cooking.op:
+    default: op
