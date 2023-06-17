@@ -5,9 +5,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.HumanEntity
 import tororo1066.man10cooking.data.IngredientCategory
 import tororo1066.man10cooking.data.ingredient.AbstractIngredient
-import tororo1066.man10cooking.recipe.AbstractRecipe
-import tororo1066.man10cooking.recipe.UniqueRecipe
-import tororo1066.man10cooking.recipe.WeightRecipe
+import tororo1066.man10cooking.recipe.*
 import tororo1066.tororopluginapi.SInput
 import tororo1066.tororopluginapi.SJavaPlugin
 import tororo1066.tororopluginapi.SStr
@@ -67,6 +65,8 @@ class Man10Cooking: SJavaPlugin(UseOption.SConfig) {
                     when(it.value){
                         is UniqueRecipe->1
                         is WeightRecipe->2
+                        is IrregularRecipe->3
+                        is DefaultRecipe->4
                         else->100
                     }
                 }.map { Pair(it.key, it.value) }
